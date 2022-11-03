@@ -1,0 +1,59 @@
+version: "3.8"
+services:
+  db:
+    image: postgres:12 
+    container_name: bookstore_authors_db
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+    ports:
+      - '5432:5432'
+    volumes:
+      - db_data:/var/lib/postgresql/data
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: bookstore_authors_pgadmin4_container
+    restart: always
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: alex@alex.se
+      PGADMIN_DEFAULT_PASSWORD: admin
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+  client:
+    build: 
+      context: ./client
+      dockerfile: Dockerfile.dev
+    volumes:
+      - /app/node_modules
+      - ./client:/app
+    ports:
+      - "3000:3000"
+  api:
+    build: 
+      context: ./api
+      dockerfile: Dockerfile.dev
+    container_name: bookstore_api
+    ports:
+      - "3002:3002"
+    volumes:
+      - ./api:/app
+      - /app/node_modules
+    depends_on:
+      - db
+  nginx:
+    build: 
+      context: ./nginx
+      dockerfile: Dockerfile.dev
+    container_name: bookstore_nginx
+    ports:
+      - "80:80"
+    depends_on:
+      - client
+      - api
+
+volumes:
+  db_data:
+  pgadmin-data:
